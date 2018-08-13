@@ -85,3 +85,27 @@ class ArrowMoverNode {
         return this
     }
 }
+
+class LinkedArrowMover {
+    constructor() {
+        this.curr = new ArrowMoverNode(0)
+        this.dir = 1
+    }
+
+    draw(context) {
+        this.curr.draw(context)
+    }
+
+    update(cb) {
+        this.curr.update(() => {
+            this.curr = this.curr.getNext(this.dir, () => {
+                this.dir *= -1
+            })
+            cb()
+        })
+    }
+
+    startUpdating(cb) {
+        this.curr.startUpdating(cb)
+    }
+}
