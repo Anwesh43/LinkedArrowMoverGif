@@ -16,7 +16,7 @@ class State {
         }
     }
 
-    startUpdating(cb) {
+    startUpdating() {
         if (this.dir == 0) {
             this.dir = 1 - 2 * this.prevScale
             cb()
@@ -66,11 +66,13 @@ class ArrowMoverNode {
     }
 
     update(cb) {
-        this.state.update(cb)
+        this.state.update(() => {
+            cb(i)
+        })
     }
 
-    startUpdating(cb) {
-        this.state.startUpdating(cb)
+    startUpdating() {
+        this.state.startUpdating()
     }
 
     getNext(dir, cb) {
@@ -97,15 +99,40 @@ class LinkedArrowMover {
     }
 
     update(cb) {
-        this.curr.update(() => {
+        this.curr.update((i) => {
             this.curr = this.curr.getNext(this.dir, () => {
                 this.dir *= -1
             })
-            cb()
+            if (i == 0 && this.dir == 1) {
+                cb()
+            }
+            else {
+                this.startUpdating()
+            }
         })
     }
 
-    startUpdating(cb) {
-        this.curr.startUpdating(cb)
+    startUpdating() {
+        this.curr.startUpdating()
+    }
+}
+
+class Renderer {
+    constructor() {
+        this.runnning = true
+        this.arrowMover = new LinkedArrowMover()
+    }
+
+    render(context, cb, endcb) {
+        while (this.running) {
+            context.fillStyle = '#212121'
+            context.fillRect(0, 0, w, h)
+            this.arrowMover.draw(context)
+            cb(context)
+            this.arrowMover.update(() => {
+                endcb()
+                this.ruinning = false
+            })
+        }
     }
 }
