@@ -10,6 +10,7 @@ class State {
 
     update(cb) {
         this.scale += this.dir * 0.1
+        console.log(this.scale)
         if (Math.abs(this.scale - this.prevScale) > 1) {
             this.scale = this.prevScale + this.dir
             this.dir = 0
@@ -21,7 +22,6 @@ class State {
     startUpdating() {
         if (this.dir == 0) {
             this.dir = 1 - 2 * this.prevScale
-            cb()
         }
     }
 }
@@ -45,31 +45,35 @@ class ArrowMoverNode {
         var sc1 = Math.min(0.5, this.state.scale) * 2
         const sc2 = Math.min(0.5, Math.max(0, this.state.scale - 0.5)) * 2
         const index = this.i % 2
-        var sc2 = (1 - index) * sc2 + (1 - sc2) * index
+        sc1 = (1 - index) * sc1 + (1 - sc1) * index
         context.strokeStyle = 'white'
         context.lineCap = 'round'
         context.lineWidth = Math.min(w, h) / 60
         context.save()
-        context.tranlsate(this.i * gap + gap * sc2, h/2)
+        context.translate(this.i * gap + gap * sc2, h/2)
         context.beginPath()
         context.moveTo(-gap/3, 0)
         context.lineTo(gap / 3, 0)
         context.stroke()
         for(var i = 0; i < 2; i++) {
             context.save()
-            context.rotate(Math.PI/4 * sc2 * (1 - 2 * i))
+            context.translate(gap/3, 0)
+            context.rotate(Math.PI/4 * sc1 * (1 - 2 * i))
             context.beginPath()
-            context.moveTo(gap/3, 0)
-            context.lineTo(gap/5, 0)
+            context.moveTo(0, 0)
+            context.lineTo(gap/5 - gap/3, 0)
             context.stroke()
             context.restore()
         }
         context.restore()
+        if (this.next) {
+            this.next.draw(context)
+        }
     }
 
     update(cb) {
         this.state.update(() => {
-            cb(i)
+            cb()
         })
     }
 
@@ -101,11 +105,11 @@ class LinkedArrowMover {
     }
 
     update(cb) {
-        this.curr.update((i) => {
+        this.curr.update(() => {
             this.curr = this.curr.getNext(this.dir, () => {
                 this.dir *= -1
             })
-            if (i == 0 && this.dir == 1) {
+            if (this.curr.i == 0 && this.dir == 1) {
                 cb()
             }
             else {
@@ -121,8 +125,9 @@ class LinkedArrowMover {
 
 class Renderer {
     constructor() {
-        this.runnning = true
+        this.running = true
         this.arrowMover = new LinkedArrowMover()
+        this.arrowMover.startUpdating()
     }
 
     render(context, cb, endcb) {
@@ -133,7 +138,7 @@ class Renderer {
             cb(context)
             this.arrowMover.update(() => {
                 endcb()
-                this.ruinning = false
+                this.running = false
             })
         }
     }
